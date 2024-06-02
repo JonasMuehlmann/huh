@@ -109,6 +109,7 @@ func (m *MultiSelect[T]) Options(options ...Option[T]) *MultiSelect[T] {
 	}
 	m.options = options
 	m.filteredOptions = options
+	m.choicesViewContentDirtyFlag = true
 	m.updateViewportHeight()
 	return m
 }
@@ -262,6 +263,7 @@ func (m *MultiSelect[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					selected := m.options[i].selected
 					m.options[i].selected = !selected
 					m.filteredOptions[m.cursor].selected = !selected
+					m.choicesViewContentDirtyFlag = true
 				}
 			}
 		case key.Matches(msg, m.keymap.Prev):
