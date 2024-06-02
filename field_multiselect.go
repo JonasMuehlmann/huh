@@ -18,13 +18,15 @@ type MultiSelect[T comparable] struct {
 	key   string
 
 	// customization
-	title           string
-	description     string
-	options         []Option[T]
-	filterable      bool
-	filteredOptions []Option[T]
-	limit           int
-	height          int
+	title                       string
+	description                 string
+	options                     []Option[T]
+	filterable                  bool
+	filteredOptions             []Option[T]
+	choicesViewContent          string
+	choicesViewContentDirtyFlag bool
+	limit                       int
+	height                      int
 
 	// error handling
 	validate func([]T) error
@@ -280,6 +282,7 @@ func (m *MultiSelect[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.filteredOptions = m.options
 			if m.filter.Value() != "" {
 				m.filteredOptions = nil
+				m.choicesViewContentDirtyFlag = true
 				for _, option := range m.options {
 					if m.filterFunc(option.Key) {
 						m.filteredOptions = append(m.filteredOptions, option)
@@ -368,6 +371,10 @@ func (m *MultiSelect[T]) descriptionView() string {
 }
 
 func (m *MultiSelect[T]) choicesView() string {
+	if !m.choicesViewContentDirtyFlag {
+		return m.choicesViewContent
+	}
+
 	var (
 		styles = m.activeStyles()
 		c      = styles.MultiSelectSelector.String()
@@ -396,7 +403,10 @@ func (m *MultiSelect[T]) choicesView() string {
 		sb.WriteString("\n")
 	}
 
-	return sb.String()
+	m.choicesViewContent = sb.String()
+	m.choicesViewContentDirtyFlag = false
+
+	return m.choicesViewContent
 }
 
 // View renders the multi-select field.
