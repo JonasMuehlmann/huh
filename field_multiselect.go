@@ -18,15 +18,13 @@ type MultiSelect[T comparable] struct {
 	key   string
 
 	// customization
-	title                       string
-	description                 string
-	options                     []Option[T]
-	filterable                  bool
-	filteredOptions             []Option[T]
-	choicesViewContent          string
-	choicesViewContentDirtyFlag bool
-	limit                       int
-	height                      int
+	title           string
+	description     string
+	options         []Option[T]
+	filterable      bool
+	filteredOptions []Option[T]
+	limit           int
+	height          int
 
 	// error handling
 	validate func([]T) error
@@ -109,7 +107,6 @@ func (m *MultiSelect[T]) Options(options ...Option[T]) *MultiSelect[T] {
 	}
 	m.options = options
 	m.filteredOptions = options
-	m.choicesViewContentDirtyFlag = true
 	m.updateViewportHeight()
 	return m
 }
@@ -263,7 +260,6 @@ func (m *MultiSelect[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					selected := m.options[i].selected
 					m.options[i].selected = !selected
 					m.filteredOptions[m.cursor].selected = !selected
-					m.choicesViewContentDirtyFlag = true
 				}
 			}
 		case key.Matches(msg, m.keymap.Prev):
@@ -284,7 +280,6 @@ func (m *MultiSelect[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.filteredOptions = m.options
 			if m.filter.Value() != "" {
 				m.filteredOptions = nil
-				m.choicesViewContentDirtyFlag = true
 				for _, option := range m.options {
 					if m.filterFunc(option.Key) {
 						m.filteredOptions = append(m.filteredOptions, option)
@@ -373,9 +368,6 @@ func (m *MultiSelect[T]) descriptionView() string {
 }
 
 func (m *MultiSelect[T]) choicesView() string {
-	if !m.choicesViewContentDirtyFlag {
-		return m.choicesViewContent
-	}
 
 	var (
 		styles = m.activeStyles()
@@ -383,6 +375,10 @@ func (m *MultiSelect[T]) choicesView() string {
 		sb     strings.Builder
 	)
 	for i, option := range m.filteredOptions {
+		if i > m.height {
+			break
+		}
+
 		if m.cursor == i {
 			sb.WriteString(c)
 		} else {
@@ -405,10 +401,7 @@ func (m *MultiSelect[T]) choicesView() string {
 		sb.WriteString("\n")
 	}
 
-	m.choicesViewContent = sb.String()
-	m.choicesViewContentDirtyFlag = false
-
-	return m.choicesViewContent
+	return sb.String()
 }
 
 // View renders the multi-select field.
